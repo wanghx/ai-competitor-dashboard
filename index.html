@@ -100,6 +100,12 @@ header h1 span{margin-right:6px}
 .rank-info{flex:1}
 .rank-name{font-weight:600;font-size:14px}
 .rank-desc{font-size:12px;color:var(--text-light);margin-top:2px}
+.rank-cmd{margin-top:4px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px}
+.rank-cmd code{background:#f0f2f5;padding:2px 8px;border-radius:4px;font-family:'SF Mono',Menlo,monospace;color:var(--text)}
+.rank-cmd .copy-icon{font-size:12px;opacity:.6;transition:opacity .15s}
+.rank-cmd:hover .copy-icon{opacity:1}
+.skill-link{color:var(--primary);text-decoration:none}
+.skill-link:hover{text-decoration:underline}
 .rank-stats{display:flex;align-items:center;gap:16px}
 .rank-usage{font-size:13px;color:var(--text);font-weight:500}
 .trend{font-size:12px;padding:2px 8px;border-radius:12px;font-weight:500}
@@ -324,16 +330,16 @@ const MOCK = {
     { name:'Qwen 2.5 72B', quality:7.8, speed:7.8, cost:8.5, tools:7.2, multimodal:6.5, code:8.0 },
   ],
   skills: [
-    { name:'claude-code-guide', desc:'Claude Code 功能指南', usage:4832, prevRank:2 },
-    { name:'simplify', desc:'代码审查与优化建议', usage:3210, prevRank:1 },
-    { name:'review', desc:'PR 代码审查', usage:2891, prevRank:4 },
-    { name:'claude-api', desc:'Claude API 开发指南', usage:2456, prevRank:3 },
-    { name:'init', desc:'项目文档初始化', usage:1987, prevRank:6 },
-    { name:'update-config', desc:'Claude Code 配置管理', usage:1654, prevRank:5 },
-    { name:'security-review', desc:'安全审查', usage:1234, prevRank:8 },
-    { name:'loop', desc:'定时任务设置', usage:987, prevRank:7 },
-    { name:'fewer-permission-prompts', desc:'减少权限弹窗', usage:756, prevRank:9 },
-    { name:'keybindings-help', desc:'快捷键自定义', usage:523, prevRank:null },
+    { name:'claude-code-guide', desc:'Claude Code 功能指南', usage:4832, prevRank:2, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code', cmd:'claude skill add claude-code-guide' },
+    { name:'simplify', desc:'代码审查与优化建议', usage:3210, prevRank:1, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add simplify' },
+    { name:'review', desc:'PR 代码审查', usage:2891, prevRank:4, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add review' },
+    { name:'claude-api', desc:'Claude API 开发指南', usage:2456, prevRank:3, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add claude-api' },
+    { name:'init', desc:'项目文档初始化', usage:1987, prevRank:6, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add init' },
+    { name:'update-config', desc:'Claude Code 配置管理', usage:1654, prevRank:5, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add update-config' },
+    { name:'security-review', desc:'安全审查', usage:1234, prevRank:8, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add security-review' },
+    { name:'loop', desc:'定时任务设置', usage:987, prevRank:7, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add loop' },
+    { name:'fewer-permission-prompts', desc:'减少权限弹窗', usage:756, prevRank:9, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add fewer-permission-prompts' },
+    { name:'keybindings-help', desc:'快捷键自定义', usage:523, prevRank:null, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add keybindings-help' },
   ],
   history: [
     { date:'2026-04-22', summary:'ChatGPT 多图输入, Claude Computer Use Beta, Gemini 10M 上下文' },
@@ -603,7 +609,13 @@ function renderSkills(){
     }
     return `<div class="rank-item">
       <div class="rank-num ${numClass}">${i+1}</div>
-      <div class="rank-info"><div class="rank-name">${s.name}</div><div class="rank-desc">${s.desc}</div></div>
+      <div class="rank-info">
+        <div class="rank-name"><a href="${s.url}" target="_blank" class="skill-link">${s.name}</a></div>
+        <div class="rank-desc">${s.desc}</div>
+        <div class="rank-cmd" onclick="event.stopPropagation();copyCmd(this,'${s.cmd}')">
+          <code>${s.cmd}</code><span class="copy-icon">📋</span>
+        </div>
+      </div>
       <div class="rank-stats">
         <span class="rank-usage">${s.usage.toLocaleString()} 次</span>
         ${trendHtml}
@@ -638,6 +650,15 @@ function renderHistory(){
       <span class="h-action">查看 →</span>
     </div>
   `).join('');
+}
+
+// ==================== 复制命令 ====================
+function copyCmd(el, cmd){
+  navigator.clipboard.writeText(cmd).then(() => {
+    const icon = el.querySelector('.copy-icon');
+    icon.textContent = '✅';
+    setTimeout(() => { icon.textContent = '📋'; }, 1500);
+  });
 }
 
 // ==================== 刷新 ====================
