@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 竞品看板</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f2f5;--sidebar:#1a1d2e;--card:#fff;--primary:#4f6ef7;
+  --text:#1a1a2e;--text-light:#666;--text-inv:#fff;
+  --border:#e8e8e8;--hover:#2a2d3e;--tag-new:#10b981;--tag-up:#3b82f6;--tag-fix:#f59e0b;
+  --shadow:0 2px 8px rgba(0,0,0,.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+header{background:#fff;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0}
+header h1{font-size:18px;font-weight:600;color:var(--text)}
+header h1 span{margin-right:6px}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.hdr-right .date{color:var(--text-light);font-size:14px}
+.btn{padding:6px 16px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:var(--text);transition:all .2s}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:#3b5de7}
+.app{display:flex;flex:1;overflow:hidden}
+.sidebar{width:200px;background:var(--sidebar);display:flex;flex-direction:column;padding:16px 0;flex-shrink:0}
+.nav-item{padding:12px 24px;color:rgba(255,255,255,.65);cursor:pointer;font-size:14px;transition:all .2s;position:relative;border-left:3px solid transparent}
+.nav-item:hover{background:var(--hover);color:rgba(255,255,255,.85)}
+.nav-item.active{background:var(--hover);color:#fff;border-left-color:var(--primary);font-weight:500}
+.nav-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 16px}
+.trend-tags{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.trend-tag{padding:8px 16px;border-radius:8px;background:#f0f2f5;font-size:13px;display:flex;align-items:center;gap:6px;transition:all .2s}
+.trend-tag:hover{background:#e3e5e8}
+.trend-tag .tt-count{background:var(--primary);color:#fff;border-radius:12px;padding:1px 8px;font-size:11px;font-weight:600}
+.trend-tag .tt-icon{font-size:16px}
+.direction-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.dir-card{background:#f8f9fa;border-radius:10px;padding:16px;border-left:4px solid var(--primary)}
+.dir-card h4{font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.dir-card .dir-prods{font-size:12px;color:var(--text-light);line-height:1.8}
+.dir-card .dir-prods span{display:inline-block;background:#fff;padding:2px 8px;border-radius:4px;margin:2px 4px 2px 0;font-weight:500}
+.dir-bar{margin-top:12px}
+.dir-bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--text-light)}
+.dir-bar-track{height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden}
+.dir-bar-fill{height:100%;border-radius:3px;transition:width .6s}
+.trend-line-wrap{max-width:640px}
+.main{flex:1;padding:24px;overflow-y:auto;background:var(--bg)}
+.page{display:none}
+.page.active{display:block}
+.summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.s-card{background:var(--card);border-radius:10px;padding:20px;box-shadow:var(--shadow)}
+.s-card .label{font-size:13px;color:var(--text-light);margin-bottom:8px}
+.s-card .val{font-size:28px;font-weight:700;color:var(--text)}
+.s-card .sub{font-size:12px;color:var(--text-light);margin-top:4px}
+.s-card .trend{font-size:12px;margin-top:4px}
+.s-card .trend.up{color:var(--tag-new)}
+.s-card .trend.down{color:#ef4444}
+.section{background:var(--card);border-radius:10px;box-shadow:var(--shadow);margin-bottom:24px;overflow:hidden}
+.section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.section-header h3{font-size:15px;font-weight:600}
+.section-body{padding:20px}
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:5px 14px;border-radius:16px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12px;color:var(--text-light);transition:all .2s}
+.filter-btn:hover,.filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.timeline{position:relative;padding-left:20px}
+.timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;padding:0 0 24px 20px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-18px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--primary);border:2px solid #fff;box-shadow:0 0 0 2px var(--primary)}
+.tl-dot.green{background:var(--tag-new);box-shadow:0 0 0 2px var(--tag-new)}
+.tl-dot.blue{background:var(--tag-up);box-shadow:0 0 0 2px var(--tag-up)}
+.tl-dot.yellow{background:var(--tag-fix);box-shadow:0 0 0 2px var(--tag-fix)}
+.tl-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.tl-product{font-weight:600;font-size:14px}
+.tag{padding:2px 8px;border-radius:4px;font-size:11px;color:#fff}
+.tag.new{background:var(--tag-new)}
+.tag.improve{background:var(--tag-up)}
+.tag.fix{background:var(--tag-fix)}
+.tl-content{font-size:13px;color:var(--text-light);line-height:1.6}
+.tl-meta{font-size:12px;color:#999;margin-top:4px;display:flex;gap:12px}
+.tl-meta a{color:var(--primary);text-decoration:none}
+.tl-meta a:hover{text-decoration:underline}
+.radar-wrap{display:flex;gap:24px;flex-wrap:wrap}
+.radar-chart{flex:1;min-width:320px;max-width:480px}
+.model-table{flex:1;min-width:320px}
+.m-table{width:100%;border-collapse:collapse;font-size:13px}
+.m-table th{text-align:left;padding:10px 12px;background:#f8f9fa;font-weight:600;color:var(--text-light);border-bottom:2px solid var(--border)}
+.m-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.m-table tr:hover{background:#f8f9fa}
+.stars{color:#f59e0b;letter-spacing:1px}
+.ranking-list{padding:0}
+.rank-item{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);transition:background .15s}
+.rank-item:hover{background:#f8f9fa}
+.rank-item:last-child{border-bottom:none}
+.rank-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-right:16px;flex-shrink:0}
+.rank-num.top1{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff}
+.rank-num.top2{background:linear-gradient(135deg,#94a3b8,#cbd5e1);color:#fff}
+.rank-num.top3{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff}
+.rank-num.normal{background:#e8e8e8;color:var(--text-light)}
+.rank-info{flex:1}
+.rank-name{font-weight:600;font-size:14px}
+.rank-desc{font-size:12px;color:var(--text-light);margin-top:2px}
+.rank-stats{display:flex;align-items:center;gap:16px}
+.rank-usage{font-size:13px;color:var(--text);font-weight:500}
+.trend{font-size:12px;padding:2px 8px;border-radius:12px;font-weight:500}
+.trend.up{background:#ecfdf5;color:var(--tag-new)}
+.trend.down{background:#fef2f2;color:#ef4444}
+.trend.flat{background:#f3f4f6;color:#999}
+.history-list{display:grid;gap:8px}
+.h-item{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#f8f9fa;border-radius:8px;cursor:pointer;transition:all .15s}
+.h-item:hover{background:#eef0f4}
+.h-item .h-date{font-weight:600;font-size:14px}
+.h-item .h-summary{font-size:13px;color:var(--text-light)}
+.h-item .h-action{color:var(--primary);font-size:13px;cursor:pointer}
+.chart-row{display:flex;gap:24px;flex-wrap:wrap}
+.chart-box{flex:1;min-width:280px;max-width:400px}
+.bar-chart-wrap{max-height:360px}
+.loading{text-align:center;padding:60px 20px;color:var(--text-light)}
+.empty-state{text-align:center;padding:40px;color:var(--text-light);font-size:14px}
+@media(max-width:900px){.sidebar{width:160px}.summary-cards{grid-template-columns:repeat(2,1fr)}.radar-wrap{flex-direction:column}.chart-row{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span>📊</span>AI 竞品看板</h1>
+  <div class="hdr-right">
+    <span class="date" id="reportDate"></span>
+    <button class="btn btn-primary" onclick="refreshData()">🔄 刷新数据</button>
+  </div>
+</header>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="nav-item active" data-page="products">客户 AI 产品更新</div>
+    <div class="nav-item" data-page="trends">趋势分析</div>
+    <div class="nav-item" data-page="models">大模型能力对比</div>
+    <div class="nav-item" data-page="skills">Top 10 Skills</div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" data-page="history">历史</div>
+  </div>
+
+  <div class="main">
+
+    <!-- ========== 客户AI产品更新 ========== -->
+    <div class="page active" id="page-products">
+      <div class="summary-cards">
+        <div class="s-card"><div class="label">今日更新</div><div class="val" id="totalUpdates">0</div><div class="sub">条</div></div>
+        <div class="s-card"><div class="label">涉及产品</div><div class="val" id="totalProducts">0</div><div class="sub">个</div></div>
+        <div class="s-card"><div class="label">新增功能</div><div class="val" id="totalNew">0</div><div class="sub">个</div></div>
+        <div class="s-card"><div class="label">最新更新</div><div class="val" style="font-size:16px" id="latestUpdate">--:--</div><div class="sub"></div></div>
+      </div>
+      <div class="section">
+        <div class="section-header"><h3>更新动态</h3></div>
+        <div class="section-body">
+          <div class="filter-bar" id="productFilter"></div>
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 趋势分析 ========== -->
+    <div class="page" id="page-trends">
+      <div class="summary-cards">
+        <div class="s-card"><div class="label">重点关注方向</div><div class="val" id="trendDirCount">0</div><div class="sub">个</div></div>
+        <div class="s-card"><div class="label">最热门方向</div><div class="val" style="font-size:18px" id="trendHotDir">--</div><div class="sub" id="trendHotCount"></div></div>
+        <div class="s-card"><div class="label">最快上升趋势</div><div class="val" style="font-size:18px" id="trendRising">--</div><div class="sub" id="trendRisingDelta"></div></div>
+        <div class="s-card"><div class="label">参与产品数</div><div class="val" id="trendProdCount">0</div><div class="sub">个</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h3>近期 AI 产品重点方向分布</h3></div>
+        <div class="section-body">
+          <div class="trend-tags" id="trendTags"></div>
+          <div class="direction-cards" id="dirCards"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h3>方向热度分布</h3></div>
+        <div class="section-body">
+          <div class="trend-line-wrap"><canvas id="trendBarChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header"><h3>近7天趋势变化</h3></div>
+        <div class="section-body">
+          <div class="trend-line-wrap"><canvas id="trendLineChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 大模型能力对比 ========== -->
+    <div class="page" id="page-models">
+      <div class="summary-cards">
+        <div class="s-card"><div class="label">参与对比模型</div><div class="val" id="modelCount">0</div><div class="sub">个</div></div>
+        <div class="s-card"><div class="label">综合最佳</div><div class="val" style="font-size:18px" id="bestModel">--</div><div class="sub">质量维度</div></div>
+        <div class="s-card"><div class="label">速度最快</div><div class="val" style="font-size:18px" id="fastModel">--</div><div class="sub">延迟维度</div></div>
+        <div class="s-card"><div class="label">性价比最高</div><div class="val" style="font-size:18px" id="cheapModel">--</div><div class="sub">成本维度</div></div>
+      </div>
+      <div class="section">
+        <div class="section-header"><h3>能力雷达图</h3></div>
+        <div class="section-body">
+          <div class="radar-wrap">
+            <div class="radar-chart"><canvas id="radarChart"></canvas></div>
+            <div class="model-table">
+              <table class="m-table" id="modelTable">
+                <thead><tr><th>模型</th><th>质量</th><th>速度</th><th>成本</th><th>综合</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header"><h3>各维度评分</h3></div>
+        <div class="section-body">
+          <div class="chart-row">
+            <div class="chart-box"><canvas id="barChart1"></canvas></div>
+            <div class="chart-box"><canvas id="barChart2"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Top 10 Skills ========== -->
+    <div class="page" id="page-skills">
+      <div class="summary-cards">
+        <div class="s-card"><div class="label">Top 1  Skill</div><div class="val" style="font-size:18px" id="topSkill">--</div><div class="sub" id="topSkillUsage"></div></div>
+        <div class="s-card"><div class="label">新入榜</div><div class="val" id="newSkills">0</div><div class="sub">个</div></div>
+        <div class="s-card"><div class="label">上升最多</div><div class="val" style="font-size:18px" id="riseSkill">--</div><div class="sub" id="riseSkillDelta"></div></div>
+        <div class="s-card"><div class="label">总使用量</div><div class="val" id="totalUsage">0</div><div class="sub">次</div></div>
+      </div>
+      <div class="section">
+        <div class="section-header"><h3>排行榜</h3></div>
+        <div class="section-body" style="padding:0">
+          <div class="ranking-list" id="rankingList"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header"><h3>使用量对比</h3></div>
+        <div class="section-body">
+          <div class="bar-chart-wrap" style="max-width:700px"><canvas id="skillBarChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 历史 ========== -->
+    <div class="page" id="page-history">
+      <div class="section">
+        <div class="section-header"><h3>历史报告</h3></div>
+        <div class="section-body">
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ==================== 模拟数据 ====================
+const MOCK = {
+  products: [
+    { product:'Claude', tag:'new', title:'Claude Artifacts 支持实时预览', content:'Artifacts 新增实时预览功能，用户可以在聊天面板中直接预览 HTML、React 组件，无需跳转到新标签页，大幅提升协作效率。', time:'10:30', source:'https://claude.ai' },
+    { product:'Claude', tag:'improve', title:'Computer Use Beta 响应速度提升', content:'Computer Use Beta 的屏幕操作响应速度提升约 40%，在表单填写、数据录入等场景下完成时间缩短一半。', time:'10:30', source:'https://claude.ai' },
+    { product:'Gemini', tag:'new', title:'Gemini 2.5 Pro 上下文窗口扩展至 1000 万 tokens', content:'Google 宣布 Gemini 2.5 Pro 上下文窗口从 100 万 tokens 扩展至 1000 万 tokens，可一次性处理数千页文档。', time:'09:15', source:'https://ai.google.dev' },
+    { product:'Gemini', tag:'fix', title:'修复多语言翻译中的性别偏误', content:'修复了在阿拉伯语、日语翻译中存在的性别偏误问题，提升翻译准确性和公平性。', time:'09:15', source:'https://ai.google.dev' },
+    { product:'ChatGPT', tag:'new', title:'支持上传多张图片进行分析', content:'新增多图像输入功能，用户可同时上传最多 10 张图片进行综合分析，支持跨图片内容关联理解。', time:'08:00', source:'https://openai.com' },
+    { product:'ChatGPT', tag:'improve', title:'GPT-4o 推理速度提升 30%', content:'优化推理管线，在复杂任务上响应速度提升约 30%，代码生成和数学推理场景效果最明显。', time:'08:00', source:'https://openai.com' },
+    { product:'MiniMax', tag:'new', title:'MiniMax-4.0 多模态模型发布', content:'推出 MiniMax-4.0 多模态大模型，支持图文理解、视频分析，在 MMBench 上达到行业领先水平。', time:'07:30', source:'https://www.minimax.chat' },
+    { product:'MiniMax', tag:'new', title:'海螺 AI 语音对话功能升级', content:'海螺 AI 的实时语音对话功能升级，支持打断、情感表达和多轮连贯对话，延迟降低至 800ms。', time:'07:30', source:'https://www.minimax.chat' },
+    { product:'WorkBuddy', tag:'new', title:'WorkBuddy Agent 智能体平台上线', content:'推出企业级 Agent 编排平台，支持工作流自动化、RAG 知识库、多模型路由，适配企业办公场景。', time:'06:00', source:'https://workbuddy.ai' },
+    { product:'WorkBuddy', tag:'improve', title:'文档协作 AI 助手体验优化', content:'优化了文档协作 AI 助手的上下文理解能力，支持长文档多段落引用和跨文档知识关联。', time:'06:00', source:'https://workbuddy.ai' },
+    { product:'悟空', tag:'new', title:'悟空 AI 数据分析 Agent 发布', content:'推出专注于数据分析的 AI Agent，支持自然语言查询数据库、自动生成可视化图表和数据报告。', time:'05:00', source:'https://wukong.ai' },
+    { product:'悟空', tag:'fix', title:'修复定时任务调度异常问题', content:'修复了定时任务在高并发场景下重复执行的问题，修复后任务执行稳定性显著提升。', time:'05:00', source:'https://wukong.ai' },
+    { product:'Kimi', tag:'new', title:'Kimi 长上下文 k1.5 模型发布', content:'推出 k1.5 推理模型，支持 200 万 tokens 上下文窗口，在长文档理解任务上准确率提升 15%。', time:'04:00', source:'https://kimi.moonshot.cn' },
+    { product:'Kimi', tag:'improve', title:'Kimi 网页搜索体验优化', content:'搜索功能支持多源信息聚合，搜索结果与 AI 回答融合度提升，引用来源可一键溯源。', time:'04:00', source:'https://kimi.moonshot.cn' },
+    { product:'EasyClaw', tag:'new', title:'EasyClaw 数据抓取 Agent 上线', content:'推出智能数据抓取 Agent，支持自然语言配置抓取规则，自动适配目标网站结构变化。', time:'03:00', source:'https://easyclaw.ai' },
+    { product:'EasyClaw', tag:'improve', title:'反检测能力增强', content:'更新反检测策略，支持动态指纹轮换和智能请求调度，成功抓取率提升至 99.2%。', time:'03:00', source:'https://easyclaw.ai' },
+  ],
+  trends: {
+    directions: [
+      { name:'Agent / 智能体', icon:'🤖', count:5, color:'#4f6ef7',
+        updates:['WorkBuddy Agent 智能体平台上线','悟空 AI 数据分析 Agent 发布','EasyClaw 数据抓取 Agent 上线'],
+        products:['WorkBuddy','悟空','EasyClaw'] },
+      { name:'多模态能力', icon:'🖼️', count:3, color:'#10b981',
+        updates:['ChatGPT 支持多张图片分析','MiniMax-4.0 多模态模型发布','Gemini 多模态增强'],
+        products:['ChatGPT','MiniMax','Gemini'] },
+      { name:'长上下文窗口', icon:'📄', count:2, color:'#f59e0b',
+        updates:['Gemini 2.5 Pro 上下文扩展至 1000 万 tokens','Kimi k1.5 支持 200 万 tokens 上下文'],
+        products:['Gemini','Kimi'] },
+      { name:'推理速度优化', icon:'⚡', count:2, color:'#ef4444',
+        updates:['GPT-4o 推理速度提升 30%','Claude Computer Use 响应速度提升 40%'],
+        products:['ChatGPT','Claude'] },
+      { name:'语音对话', icon:'🎙️', count:1, color:'#8b5cf6',
+        updates:['海螺 AI 语音对话功能升级'],
+        products:['MiniMax'] },
+      { name:'实时预览 / 协作', icon:'👀', count:1, color:'#ec4899',
+        updates:['Claude Artifacts 支持实时预览'],
+        products:['Claude'] },
+      { name:'搜索与知识聚合', icon:'🔍', count:1, color:'#06b6d4',
+        updates:['Kimi 网页搜索体验优化'],
+        products:['Kimi'] },
+      { name:'数据抓取', icon:'🕷️', count:1, color:'#84cc16',
+        updates:['EasyClaw 反检测能力增强'],
+        products:['EasyClaw'] },
+    ],
+    lineHistory: [
+      { date:'04-17', 'Agent / 智能体':1, '多模态能力':2, '长上下文窗口':1, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':0, '搜索与知识聚合':1, '数据抓取':0 },
+      { date:'04-18', 'Agent / 智能体':1, '多模态能力':1, '长上下文窗口':2, '推理速度优化':1, '语音对话':1, '实时预览 / 协作':0, '搜索与知识聚合':0, '数据抓取':1 },
+      { date:'04-19', 'Agent / 智能体':2, '多模态能力':1, '长上下文窗口':1, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':0 },
+      { date:'04-20', 'Agent / 智能体':1, '多模态能力':2, '长上下文窗口':1, '推理速度优化':0, '语音对话':1, '实时预览 / 协作':0, '搜索与知识聚合':0, '数据抓取':1 },
+      { date:'04-21', 'Agent / 智能体':2, '多模态能力':1, '长上下文窗口':2, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':0 },
+      { date:'04-22', 'Agent / 智能体':3, '多模态能力':3, '长上下文窗口':2, '推理速度优化':2, '语音对话':1, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':2 },
+    ]
+  },
+  models: [
+    { name:'GPT-4o', quality:9.2, speed:8.5, cost:6.0, tools:9.0, multimodal:9.5, code:9.0 },
+    { name:'Claude Sonnet 4', quality:9.0, speed:8.8, cost:7.0, tools:8.5, multimodal:8.0, code:9.3 },
+    { name:'Gemini 2.5 Pro', quality:8.8, speed:7.5, cost:8.0, tools:7.5, multimodal:8.5, code:8.5 },
+    { name:'Llama 3.3 70B', quality:7.5, speed:8.0, cost:9.0, tools:7.0, multimodal:5.0, code:7.5 },
+    { name:'Qwen 2.5 72B', quality:7.8, speed:7.8, cost:8.5, tools:7.2, multimodal:6.5, code:8.0 },
+  ],
+  skills: [
+    { name:'claude-code-guide', desc:'Claude Code 功能指南', usage:4832, prevRank:2 },
+    { name:'simplify', desc:'代码审查与优化建议', usage:3210, prevRank:1 },
+    { name:'review', desc:'PR 代码审查', usage:2891, prevRank:4 },
+    { name:'claude-api', desc:'Claude API 开发指南', usage:2456, prevRank:3 },
+    { name:'init', desc:'项目文档初始化', usage:1987, prevRank:6 },
+    { name:'update-config', desc:'Claude Code 配置管理', usage:1654, prevRank:5 },
+    { name:'security-review', desc:'安全审查', usage:1234, prevRank:8 },
+    { name:'loop', desc:'定时任务设置', usage:987, prevRank:7 },
+    { name:'fewer-permission-prompts', desc:'减少权限弹窗', usage:756, prevRank:9 },
+    { name:'keybindings-help', desc:'快捷键自定义', usage:523, prevRank:null },
+  ],
+  history: [
+    { date:'2026-04-22', summary:'ChatGPT 多图输入, Claude Computer Use Beta, Gemini 10M 上下文' },
+    { date:'2026-04-21', summary:'Claude 3.5 Sonnet 发布, GPT-4o 代码优化, Perplexity 新增 API' },
+    { date:'2026-04-20', summary:'Gemini 多模态增强, Cursor 新功能上线, Notion AI 模板系统' },
+    { date:'2026-04-19', summary:'Llama 3.3 70B 发布, Qwen 2.5 开源, Claude Artifacts 更新' },
+    { date:'2026-04-18', summary:'GPT-4 Turbo 降价, Claude 多语言改进, Gemini 2.0 路线图公布' },
+    { date:'2026-04-17', summary:'ChatGPT 插件市场更新, Claude Web 搜索上线, Gemini Flash 发布' },
+  ]
+};
+
+let radarChartInstance = null;
+let barChart1Instance = null;
+let barChart2Instance = null;
+let skillBarInstance = null;
+let trendBarInstance = null;
+let trendLineInstance = null;
+
+// ==================== 导航 ====================
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    const page = document.getElementById('page-' + el.dataset.page);
+    if(page) page.classList.add('active');
+    // Lazy-render on first view
+    const pg = el.dataset.page;
+    if(pg === 'trends' && !trendBarInstance) renderTrends();
+    if(pg === 'models' && !radarChartInstance) renderModels();
+    if(pg === 'skills' && !skillBarInstance) renderSkills();
+    if(pg === 'history' && !document.getElementById('historyList').children.length) renderHistory();
+  });
+});
+
+// ==================== 工具函数 ====================
+function $(id){ return document.getElementById(id) }
+function today(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// ==================== 客户AI产品更新 ====================
+function renderProducts(){
+  const data = MOCK.products;
+  // Summary cards
+  $('totalUpdates').textContent = data.length;
+  const prods = [...new Set(data.map(d=>d.product))];
+  $('totalProducts').textContent = prods.length;
+  $('totalNew').textContent = data.filter(d=>d.tag==='new').length;
+  $('latestUpdate').textContent = data[0].time;
+
+  // Filter buttons
+  const filterBar = $('productFilter');
+  filterBar.innerHTML = '<button class="filter-btn active" data-filter="all">全部</button>';
+  prods.forEach(p => { filterBar.innerHTML += `<button class="filter-btn" data-filter="${p}">${p}</button>`; });
+  filterBar.innerHTML += '<button class="filter-btn" data-filter="new">新增</button>';
+  filterBar.innerHTML += '<button class="filter-btn" data-filter="improve">改进</button>';
+  filterBar.innerHTML += '<button class="filter-btn" data-filter="fix">修复</button>';
+
+  filterBar.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBar.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTimeline(btn.dataset.filter);
+    });
+  });
+  renderTimeline('all');
+}
+
+function renderTimeline(filter){
+  let data = MOCK.products;
+  if(filter !== 'all'){
+    if(['new','improve','fix'].includes(filter)) data = data.filter(d=>d.tag===filter);
+    else data = data.filter(d=>d.product===filter);
+  }
+  const tl = $('timeline');
+  tl.innerHTML = data.map(d => `
+    <div class="tl-item">
+      <div class="tl-dot ${d.tag==='new'?'green':d.tag==='improve'?'blue':'yellow'}"></div>
+      <div class="tl-header">
+        <span class="tl-product">${d.product}</span>
+        <span class="tag ${d.tag}">${d.tag==='new'?'新增':d.tag==='improve'?'改进':'修复'}</span>
+      </div>
+      <div class="tl-content"><strong>${d.title}</strong><br>${d.content}</div>
+      <div class="tl-meta"><span>${d.time}</span><a href="${d.source}" target="_blank">来源 ↗</a></div>
+    </div>
+  `).join('');
+}
+
+// ==================== 趋势分析 ====================
+function renderTrends(){
+  const dirs = MOCK.trends.directions;
+  const maxCount = Math.max(...dirs.map(d=>d.count));
+  const prods = [...new Set(dirs.flatMap(d=>d.products))];
+
+  // Summary cards
+  $('trendDirCount').textContent = dirs.length;
+  const hot = dirs.reduce((a,b)=>a.count>b.count?a:b);
+  $('trendHotDir').textContent = hot.name;
+  $('trendHotCount').textContent = hot.count + ' 条更新';
+  $('trendProdCount').textContent = prods.length;
+
+  // Trend tags (sorted by count desc)
+  const sorted = [...dirs].sort((a,b)=>b.count-a.count);
+  $('trendTags').innerHTML = sorted.map(d =>
+    `<div class="trend-tag"><span class="tt-icon">${d.icon}</span>${d.name}<span class="tt-count">${d.count}</span></div>`
+  ).join('');
+
+  // Direction detail cards
+  $('dirCards').innerHTML = dirs.map(d => {
+    const pct = (d.count / maxCount * 100).toFixed(0);
+    return `<div class="dir-card" style="border-left-color:${d.color}">
+      <h4>${d.icon} ${d.name}</h4>
+      <div class="dir-prods">${d.products.map(p=>'<span>'+p+'</span>').join('')}${d.updates.map(u=>'<div style="margin-top:2px;font-size:12px;color:#666">• '+u+'</div>').join('')}</div>
+      <div class="dir-bar">
+        <div class="dir-bar-label"><span>更新数: ${d.count}</span><span>占比: ${(d.count/MOCK.products.length*100).toFixed(0)}%</span></div>
+        <div class="dir-bar-track"><div class="dir-bar-fill" style="width:${pct}%;background:${d.color}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Bar chart - direction distribution
+  if(trendBarInstance) trendBarInstance.destroy();
+  trendBarInstance = new Chart($('trendBarChart'), {
+    type:'bar',
+    data:{
+      labels: sorted.map(d=>d.name),
+      datasets:[{
+        label:'更新数',
+        data: sorted.map(d=>d.count),
+        backgroundColor: sorted.map(d=>d.color),
+        borderRadius: 6
+      }]
+    },
+    options:{
+      responsive:true,
+      indexAxis:'y',
+      scales:{ x:{ beginAtZero:true, ticks:{ step:1 } } },
+      plugins:{ legend:{ display:false } },
+      animation:{ duration:800 }
+    }
+  });
+
+  // Line chart - 7 day trend
+  if(trendLineInstance) trendLineInstance.destroy();
+  const hist = MOCK.trends.lineHistory;
+  const lineLabels = hist.map(h=>h.date);
+  const lineDatasets = dirs.map(d=>({
+    label: d.name,
+    data: hist.map(h=>h[d.name]||0),
+    borderColor: d.color,
+    backgroundColor: d.color+'33',
+    tension: 0.3,
+    pointRadius: 3,
+    fill: false,
+  }));
+  trendLineInstance = new Chart($('trendLineChart'), {
+    type:'line',
+    data:{ labels:lineLabels, datasets:lineDatasets },
+    options:{
+      responsive:true,
+      scales:{ y:{ beginAtZero:true, ticks:{ step:1 } } },
+      plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11 }, padding:10 } } },
+      animation:{ duration:800 }
+    }
+  });
+}
+
+// ==================== 大模型能力对比 ====================
+function renderModels(){
+  const models = MOCK.models;
+  $('modelCount').textContent = models.length;
+
+  // Best model by quality
+  const best = models.reduce((a,b) => a.quality > b.quality ? a : b);
+  $('bestModel').textContent = best.name;
+  const fast = models.reduce((a,b) => a.speed > b.speed ? a : b);
+  $('fastModel').textContent = fast.name;
+  const cheap = models.reduce((a,b) => a.cost > b.cost ? a : b);
+  $('cheapModel').textContent = cheap.name;
+
+  // Radar chart
+  const dims = ['quality','speed','cost','tools','multimodal','code'];
+  const dimLabels = ['质量','速度','成本','工具调用','多模态','代码'];
+  const chartData = models.map(m => ({
+    label: m.name,
+    data: dims.map(d => m[d]),
+    borderColor: ['#4f6ef7','#10b981','#f59e0b','#ef4444','#8b5cf6'][models.indexOf(m)],
+    backgroundColor: ['rgba(79,110,247,.1)','rgba(16,185,129,.1)','rgba(245,158,11,.1)','rgba(239,68,68,.1)','rgba(139,92,246,.1)'][models.indexOf(m)],
+  }));
+
+  if(radarChartInstance) radarChartInstance.destroy();
+  const ctx = $('radarChart').getContext('2d');
+  radarChartInstance = new Chart(ctx, {
+    type:'radar',
+    data:{ labels:dimLabels, datasets:chartData },
+    options:{
+      responsive:true,
+      scales:{ r:{ beginAtZero:true, max:10, ticks:{ stepSize:2, backdropColor:'#f8f9fa' }, pointLabels:{ font:{ size:12 } } } },
+      plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11 }, padding:12 } } },
+      animation:{ duration:800 }
+    }
+  });
+
+  // Model table
+  const tbody = $('modelTable').querySelector('tbody');
+  tbody.innerHTML = models.map(m => {
+    const avg = ((m.quality+m.speed+m.cost+m.tools+m.multimodal+m.code)/6).toFixed(1);
+    const stars = Math.round(avg/2);
+    return `<tr><td><strong>${m.name}</strong></td><td><span class="stars">${'★'.repeat(stars)}${'☆'.repeat(5-stars)}</span> ${m.quality}</td><td>${m.speed}</td><td>${m.cost}</td><td><strong>${avg}</strong></td></tr>`;
+  }).join('');
+
+  // Bar charts
+  const labels = models.map(m=>m.name);
+  if(barChart1Instance) barChart1Instance.destroy();
+  if(barChart2Instance) barChart2Instance.destroy();
+
+  const colors = ['#4f6ef7','#10b981','#f59e0b','#ef4444','#8b5cf6'];
+
+  barChart1Instance = new Chart($('barChart1'), {
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'质量', data:models.map(m=>m.quality), backgroundColor:colors },
+      { label:'代码', data:models.map(m=>m.code), backgroundColor:colors.map(c=>c+'88') }
+    ]},
+    options:{ responsive:true, scales:{ y:{ beginAtZero:true, max:10 } }, plugins:{ legend:{ position:'bottom' } }, animation:{ duration:800 } }
+  });
+
+  barChart2Instance = new Chart($('barChart2'), {
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'速度', data:models.map(m=>m.speed), backgroundColor:colors },
+      { label:'成本', data:models.map(m=>m.cost), backgroundColor:colors.map(c=>c+'88') }
+    ]},
+    options:{ responsive:true, indexAxis:'y', scales:{ x:{ beginAtZero:true, max:10 } }, plugins:{ legend:{ position:'bottom' } }, animation:{ duration:800 } }
+  });
+}
+
+// ==================== Top 10 Skills ====================
+function renderSkills(){
+  const skills = MOCK.skills;
+  $('topSkill').textContent = skills[0].name;
+  $('topSkillUsage').textContent = '日均 ' + skills[0].usage.toLocaleString() + ' 次';
+  $('newSkills').textContent = skills.filter(s=>s.prevRank===null).length;
+
+  const rises = skills.filter(s=>s.prevRank!==null && s.prevRank > skills.indexOf(s)+1);
+  if(rises.length){
+    const top = rises[0];
+    $('riseSkill').textContent = top.name;
+    $('riseSkillDelta').textContent = `上升 ${top.prevRank - (skills.indexOf(top)+1)} 位`;
+  }
+  $('totalUsage').textContent = skills.reduce((a,s)=>a+s.usage,0).toLocaleString();
+
+  const list = $('rankingList');
+  list.innerHTML = skills.map((s,i) => {
+    const numClass = i===0?'top1':i===1?'top2':i===2?'top3':'normal';
+    let trendHtml = '';
+    if(s.prevRank===null){
+      trendHtml = '<span class="trend up">新入榜</span>';
+    } else if(s.prevRank < i+1){
+      trendHtml = `<span class="trend down">↓${s.prevRank-(i+1)}</span>`;
+    } else if(s.prevRank > i+1){
+      trendHtml = `<span class="trend up">↑${s.prevRank-(i+1)}</span>`;
+    } else {
+      trendHtml = '<span class="trend flat">-</span>';
+    }
+    return `<div class="rank-item">
+      <div class="rank-num ${numClass}">${i+1}</div>
+      <div class="rank-info"><div class="rank-name">${s.name}</div><div class="rank-desc">${s.desc}</div></div>
+      <div class="rank-stats">
+        <span class="rank-usage">${s.usage.toLocaleString()} 次</span>
+        ${trendHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Bar chart
+  if(skillBarInstance) skillBarInstance.destroy();
+  skillBarInstance = new Chart($('skillBarChart'), {
+    type:'bar',
+    data:{
+      labels:skills.map(s=>s.name),
+      datasets:[{ label:'使用量', data:skills.map(s=>s.usage), backgroundColor:'#4f6ef7', borderRadius:6, barThickness:32 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true,
+      scales:{ x:{ beginAtZero:true }, y:{ ticks:{ font:{ size:11 } } } },
+      plugins:{ legend:{ display:false } },
+      animation:{ duration:800 }
+    }
+  });
+}
+
+// ==================== 历史 ====================
+function renderHistory(){
+  const list = $('historyList');
+  list.innerHTML = MOCK.history.map(h => `
+    <div class="h-item">
+      <span class="h-date">${h.date}</span>
+      <span class="h-summary">${h.summary}</span>
+      <span class="h-action">查看 →</span>
+    </div>
+  `).join('');
+}
+
+// ==================== 刷新 ====================
+function refreshData(){
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = '⏳ 刷新中...';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = '🔄 刷新数据';
+    btn.disabled = false;
+  }, 1200);
+}
+
+// ==================== 初始化 ====================
+$('reportDate').textContent = today();
+renderProducts();
+</script>
+</body>
+</html>
