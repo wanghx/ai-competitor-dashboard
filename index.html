@@ -140,7 +140,6 @@ header h1 span{margin-right:6px}
   <div class="sidebar">
     <div class="nav-item active" data-page="products">客户 AI 产品更新</div>
     <div class="nav-item" data-page="trends">趋势分析</div>
-    <div class="nav-item" data-page="models">大模型能力对比</div>
     <div class="nav-item" data-page="skills">Top 20 Skills</div>
     <div class="nav-divider"></div>
     <div class="nav-item" data-page="history">历史</div>
@@ -175,7 +174,14 @@ header h1 span{margin-right:6px}
       </div>
 
       <div class="section">
-        <div class="section-header"><h3>近期 AI 产品重点方向分布</h3></div>
+        <div class="section-header">
+          <h3>近期 AI 产品重点方向分布</h3>
+          <div class="filter-bar" id="trendRangeFilter" style="margin-bottom:0">
+            <button class="filter-btn active" data-range="week">近一周</button>
+            <button class="filter-btn" data-range="month">近一个月</button>
+            <button class="filter-btn" data-range="quarter">近三个月</button>
+          </div>
+        </div>
         <div class="section-body">
           <div class="trend-tags" id="trendTags"></div>
           <div class="direction-cards" id="dirCards"></div>
@@ -287,41 +293,117 @@ const MOCK = {
     { product:'EasyClaw', tag:'improve', title:'反检测能力增强', content:'更新反检测策略，支持动态指纹轮换和智能请求调度，成功抓取率提升至 99.2%。', time:'03:00', source:'https://easyclaw.ai' },
   ],
   trends: {
-    directions: [
-      { name:'Agent / 智能体', icon:'🤖', count:5, color:'#4f6ef7',
-        updates:['WorkBuddy Agent 智能体平台上线','悟空 AI 数据分析 Agent 发布','EasyClaw 数据抓取 Agent 上线'],
-        products:['WorkBuddy','悟空','EasyClaw'] },
-      { name:'多模态能力', icon:'🖼️', count:3, color:'#10b981',
-        updates:['ChatGPT 支持多张图片分析','MiniMax-4.0 多模态模型发布','Gemini 多模态增强'],
-        products:['ChatGPT','MiniMax','Gemini'] },
-      { name:'长上下文窗口', icon:'📄', count:2, color:'#f59e0b',
-        updates:['Gemini 2.5 Pro 上下文扩展至 1000 万 tokens','Kimi k1.5 支持 200 万 tokens 上下文'],
-        products:['Gemini','Kimi'] },
-      { name:'推理速度优化', icon:'⚡', count:2, color:'#ef4444',
-        updates:['GPT-4o 推理速度提升 30%','Claude Computer Use 响应速度提升 40%'],
-        products:['ChatGPT','Claude'] },
-      { name:'语音对话', icon:'🎙️', count:1, color:'#8b5cf6',
-        updates:['海螺 AI 语音对话功能升级'],
-        products:['MiniMax'] },
-      { name:'实时预览 / 协作', icon:'👀', count:1, color:'#ec4899',
-        updates:['Claude Artifacts 支持实时预览'],
-        products:['Claude'] },
-      { name:'搜索与知识聚合', icon:'🔍', count:1, color:'#06b6d4',
-        updates:['Kimi 网页搜索体验优化'],
-        products:['Kimi'] },
-      { name:'数据抓取', icon:'🕷️', count:1, color:'#84cc16',
-        updates:['EasyClaw 反检测能力增强'],
-        products:['EasyClaw'] },
-    ],
-    lineHistory: [
-      { date:'04-17', 'Agent / 智能体':1, '多模态能力':2, '长上下文窗口':1, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':0, '搜索与知识聚合':1, '数据抓取':0 },
-      { date:'04-18', 'Agent / 智能体':1, '多模态能力':1, '长上下文窗口':2, '推理速度优化':1, '语音对话':1, '实时预览 / 协作':0, '搜索与知识聚合':0, '数据抓取':1 },
-      { date:'04-19', 'Agent / 智能体':2, '多模态能力':1, '长上下文窗口':1, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':0 },
-      { date:'04-20', 'Agent / 智能体':1, '多模态能力':2, '长上下文窗口':1, '推理速度优化':0, '语音对话':1, '实时预览 / 协作':0, '搜索与知识聚合':0, '数据抓取':1 },
-      { date:'04-21', 'Agent / 智能体':2, '多模态能力':1, '长上下文窗口':2, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':0 },
-      { date:'04-22', 'Agent / 智能体':3, '多模态能力':3, '长上下文窗口':2, '推理速度优化':2, '语音对话':1, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':2 },
-    ]
-  },
+    ranges: {
+      week: {
+        directions: [
+          { name:'Agent / 智能体', icon:'🤖', count:5, color:'#4f6ef7',
+            updates:['WorkBuddy Agent 智能体平台上线','悟空 AI 数据分析 Agent 发布','EasyClaw 数据抓取 Agent 上线'],
+            products:['WorkBuddy','悟空','EasyClaw'] },
+          { name:'多模态能力', icon:'🖼️', count:3, color:'#10b981',
+            updates:['ChatGPT 支持多张图片分析','MiniMax-4.0 多模态模型发布','Gemini 多模态增强'],
+            products:['ChatGPT','MiniMax','Gemini'] },
+          { name:'长上下文窗口', icon:'📄', count:2, color:'#f59e0b',
+            updates:['Gemini 2.5 Pro 上下文扩展至 1000 万 tokens','Kimi k1.5 支持 200 万 tokens 上下文'],
+            products:['Gemini','Kimi'] },
+          { name:'推理速度优化', icon:'⚡', count:2, color:'#ef4444',
+            updates:['GPT-4o 推理速度提升 30%','Claude Computer Use 响应速度提升 40%'],
+            products:['ChatGPT','Claude'] },
+          { name:'语音对话', icon:'🎙️', count:1, color:'#8b5cf6',
+            updates:['海螺 AI 语音对话功能升级'],
+            products:['MiniMax'] },
+          { name:'实时预览 / 协作', icon:'👀', count:1, color:'#ec4899',
+            updates:['Claude Artifacts 支持实时预览'],
+            products:['Claude'] },
+          { name:'搜索与知识聚合', icon:'🔍', count:1, color:'#06b6d4',
+            updates:['Kimi 网页搜索体验优化'],
+            products:['Kimi'] },
+          { name:'数据抓取', icon:'🕷️', count:1, color:'#84cc16',
+            updates:['EasyClaw 反检测能力增强'],
+            products:['EasyClaw'] },
+        ],
+        lineHistory: [
+          { date:'04-17', 'Agent / 智能体':1, '多模态能力':2, '长上下文窗口':1, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':0, '搜索与知识聚合':1, '数据抓取':0 },
+          { date:'04-18', 'Agent / 智能体':1, '多模态能力':1, '长上下文窗口':2, '推理速度优化':1, '语音对话':1, '实时预览 / 协作':0, '搜索与知识聚合':0, '数据抓取':1 },
+          { date:'04-19', 'Agent / 智能体':2, '多模态能力':1, '长上下文窗口':1, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':0 },
+          { date:'04-20', 'Agent / 智能体':1, '多模态能力':2, '长上下文窗口':1, '推理速度优化':0, '语音对话':1, '实时预览 / 协作':0, '搜索与知识聚合':0, '数据抓取':1 },
+          { date:'04-21', 'Agent / 智能体':2, '多模态能力':1, '长上下文窗口':2, '推理速度优化':1, '语音对话':0, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':0 },
+          { date:'04-22', 'Agent / 智能体':3, '多模态能力':3, '长上下文窗口':2, '推理速度优化':2, '语音对话':1, '实时预览 / 协作':1, '搜索与知识聚合':1, '数据抓取':2 },
+        ]
+      },
+      month: {
+        directions: [
+          { name:'Agent / 智能体', icon:'🤖', count:18, color:'#4f6ef7',
+            updates:['WorkBuddy Agent 平台上线','悟空数据分析 Agent','EasyClaw 数据抓取 Agent','Claude Computer Use 公测','Cursor Agent 多文件编辑'],
+            products:['WorkBuddy','悟空','EasyClaw','Claude','Cursor'] },
+          { name:'多模态能力', icon:'🖼️', count:12, color:'#10b981',
+            updates:['ChatGPT 多图分析','MiniMax-4.0 多模态','Gemini 视频理解','Claude 图像生成优化'],
+            products:['ChatGPT','MiniMax','Gemini','Claude'] },
+          { name:'长上下文窗口', icon:'📄', count:9, color:'#f59e0b',
+            updates:['Gemini 1000 万 tokens','Kimi 200 万 tokens','Claude 200k 上下文优化'],
+            products:['Gemini','Kimi','Claude'] },
+          { name:'推理速度优化', icon:'⚡', count:8, color:'#ef4444',
+            updates:['GPT-4o 速度提升 30%','Claude 响应加速','Gemini Flash 上线'],
+            products:['ChatGPT','Claude','Gemini'] },
+          { name:'搜索与知识聚合', icon:'🔍', count:6, color:'#06b6d4',
+            updates:['Kimi 多源搜索','Perplexity API','ChatGPT 实时联网'],
+            products:['Kimi','Perplexity','ChatGPT'] },
+          { name:'数据抓取', icon:'🕷️', count:5, color:'#84cc16',
+            updates:['EasyClaw 智能抓取上线','反检测策略升级'],
+            products:['EasyClaw'] },
+          { name:'语音对话', icon:'🎙️', count:4, color:'#8b5cf6',
+            updates:['海螺 AI 语音升级','Gemini 实时语音'],
+            products:['MiniMax','Gemini'] },
+          { name:'实时预览 / 协作', icon:'👀', count:3, color:'#ec4899',
+            updates:['Claude Artifacts 实时预览','Notion AI 协作增强'],
+            products:['Claude','Notion AI'] },
+        ],
+        lineHistory: [
+          { date:'03-23', 'Agent / 智能体':1, '多模态能力':1, '长上下文窗口':0, '推理速度优化':1, '搜索与知识聚合':0, '数据抓取':0, '语音对话':0, '实时预览 / 协作':0 },
+          { date:'03-30', 'Agent / 智能体':2, '多模态能力':2, '长上下文窗口':1, '推理速度优化':1, '搜索与知识聚合':1, '数据抓取':0, '语音对话':1, '实时预览 / 协作':0 },
+          { date:'04-06', 'Agent / 智能体':3, '多模态能力':2, '长上下文窗口':1, '推理速度优化':2, '搜索与知识聚合':1, '数据抓取':1, '语音对话':0, '实时预览 / 协作':1 },
+          { date:'04-13', 'Agent / 智能体':4, '多模态能力':3, '长上下文窗口':2, '推理速度优化':1, '搜索与知识聚合':2, '数据抓取':2, '语音对话':1, '实时预览 / 协作':0 },
+          { date:'04-20', 'Agent / 智能体':5, '多模态能力':3, '长上下文窗口':3, '推理速度优化':2, '搜索与知识聚合':2, '数据抓取':2, '语音对话':2, '实时预览 / 协作':2 },
+        ]
+      },
+      quarter: {
+        directions: [
+          { name:'Agent / 智能体', icon:'🤖', count:45, color:'#4f6ef7',
+            updates:['Agent 编排平台爆发、多产品上线 Agent 功能','企业级 Agent 工作流成为主流方向'],
+            products:['Claude','WorkBuddy','悟空','EasyClaw','Cursor','ChatGPT'] },
+          { name:'多模态能力', icon:'🖼️', count:32, color:'#10b981',
+            updates:['图文理解成为标配、视频分析能力竞赛','多模态输入/输出全面普及'],
+            products:['MiniMax','Gemini','ChatGPT','Claude'] },
+          { name:'推理速度优化', icon:'⚡', count:22, color:'#ef4444',
+            updates:['响应时间持续缩短、实时推理成为刚需'],
+            products:['ChatGPT','Claude','Gemini','GPT-4o'] },
+          { name:'长上下文窗口', icon:'📄', count:18, color:'#f59e0b',
+            updates:['百万级上下文成为新标准、超长文档处理能力升级'],
+            products:['Gemini','Kimi','Claude'] },
+          { name:'搜索与知识聚合', icon:'🔍', count:15, color:'#06b6d4',
+            updates:['搜索+AI 融合方案成熟、多源信息聚合能力增强'],
+            products:['Kimi','Perplexity','ChatGPT'] },
+          { name:'数据抓取', icon:'🕷️', count:12, color:'#84cc16',
+            updates:['智能数据抓取 Agent 兴起、反检测技术升级'],
+            products:['EasyClaw'] },
+          { name:'语音对话', icon:'🎙️', count:10, color:'#8b5cf6',
+            updates:['实时语音对话低延迟化、情感表达能力提升'],
+            products:['MiniMax','Gemini','ChatGPT'] },
+          { name:'实时预览 / 协作', icon:'👀', count:8, color:'#ec4899',
+            updates:['AI 协作实时化、所见即所得编辑体验'],
+            products:['Claude','Notion AI'] },
+        ],
+        lineHistory: [
+          { date:'01-22', 'Agent / 智能体':2, '多模态能力':1, '长上下文窗口':0, '推理速度优化':1, '搜索与知识聚合':0, '数据抓取':0, '语音对话':0, '实时预览 / 协作':0 },
+          { date:'02-05', 'Agent / 智能体':3, '多模态能力':2, '长上下文窗口':1, '推理速度优化':2, '搜索与知识聚合':0, '数据抓取':0, '语音对话':1, '实时预览 / 协作':0 },
+          { date:'02-18', 'Agent / 智能体':4, '多模态能力':3, '长上下文窗口':1, '推理速度优化':2, '搜索与知识聚合':1, '数据抓取':1, '语音对话':1, '实时预览 / 协作':0 },
+          { date:'03-03', 'Agent / 智能体':5, '多模态能力':3, '长上下文窗口':2, '推理速度优化':3, '搜索与知识聚合':1, '数据抓取':1, '语音对话':2, '实时预览 / 协作':1 },
+          { date:'03-16', 'Agent / 智能体':6, '多模态能力':4, '长上下文窗口':2, '推理速度优化':3, '搜索与知识聚合':2, '数据抓取':2, '语音对话':2, '实时预览 / 协作':1 },
+          { date:'03-29', 'Agent / 智能体':7, '多模态能力':4, '长上下文窗口':3, '推理速度优化':3, '搜索与知识聚合':2, '数据抓取':2, '语音对话':2, '实时预览 / 协作':2 },
+          { date:'04-11', 'Agent / 智能体':8, '多模态能力':5, '长上下文窗口':4, '推理速度优化':4, '搜索与知识聚合':3, '数据抓取':3, '语音对话':2, '实时预览 / 协作':2 },
+          { date:'04-22', 'Agent / 智能体':10, '多模态能力':6, '长上下文窗口':5, '推理速度优化':4, '搜索与知识聚合':3, '数据抓取':3, '语音对话':3, '实时预览 / 协作':3 },
+        ]
+      }
+    },
   models: [
     { name:'GPT-4o', quality:9.2, speed:8.5, cost:6.0, tools:9.0, multimodal:9.5, code:9.0 },
     { name:'Claude Sonnet 4', quality:9.0, speed:8.8, cost:7.0, tools:8.5, multimodal:8.0, code:9.3 },
@@ -379,9 +461,17 @@ document.querySelectorAll('.nav-item').forEach(el => {
     // Lazy-render on first view
     const pg = el.dataset.page;
     if(pg === 'trends' && !trendBarInstance) renderTrends();
-    if(pg === 'models' && !radarChartInstance) renderModels();
     if(pg === 'skills' && !skillBarInstance) renderSkills();
     if(pg === 'history' && !document.getElementById('historyList').children.length) renderHistory();
+  });
+});
+
+// ==================== 趋势分析时间范围筛选 ====================
+document.querySelectorAll('#trendRangeFilter .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#trendRangeFilter .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTrends(btn.dataset.range);
   });
 });
 
@@ -441,8 +531,10 @@ function renderTimeline(filter){
 }
 
 // ==================== 趋势分析 ====================
-function renderTrends(){
-  const dirs = MOCK.trends.directions;
+function renderTrends(range){
+  range = range || 'week';
+  const data = MOCK.trends.ranges[range];
+  const dirs = data.directions;
   const maxCount = Math.max(...dirs.map(d=>d.count));
   const prods = [...new Set(dirs.flatMap(d=>d.products))];
 
@@ -494,9 +586,9 @@ function renderTrends(){
     }
   });
 
-  // Line chart - 7 day trend
+  // Line chart - trend over time
   if(trendLineInstance) trendLineInstance.destroy();
-  const hist = MOCK.trends.lineHistory;
+  const hist = data.lineHistory;
   const lineLabels = hist.map(h=>h.date);
   const lineDatasets = dirs.map(d=>({
     label: d.name,
