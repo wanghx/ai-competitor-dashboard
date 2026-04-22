@@ -120,7 +120,7 @@ header h1 span{margin-right:6px}
 .h-item .h-action{color:var(--primary);font-size:13px;cursor:pointer}
 .chart-row{display:flex;gap:24px;flex-wrap:wrap}
 .chart-box{flex:1;min-width:280px;max-width:400px}
-.bar-chart-wrap{max-height:360px}
+.bar-chart-wrap{max-height:520px}
 .loading{text-align:center;padding:60px 20px;color:var(--text-light)}
 .empty-state{text-align:center;padding:40px;color:var(--text-light);font-size:14px}
 @media(max-width:900px){.sidebar{width:160px}.summary-cards{grid-template-columns:repeat(2,1fr)}.radar-wrap{flex-direction:column}.chart-row{flex-direction:column}}
@@ -141,7 +141,7 @@ header h1 span{margin-right:6px}
     <div class="nav-item active" data-page="products">客户 AI 产品更新</div>
     <div class="nav-item" data-page="trends">趋势分析</div>
     <div class="nav-item" data-page="models">大模型能力对比</div>
-    <div class="nav-item" data-page="skills">Top 10 Skills</div>
+    <div class="nav-item" data-page="skills">Top 20 Skills</div>
     <div class="nav-divider"></div>
     <div class="nav-item" data-page="history">历史</div>
   </div>
@@ -330,16 +330,26 @@ const MOCK = {
     { name:'Qwen 2.5 72B', quality:7.8, speed:7.8, cost:8.5, tools:7.2, multimodal:6.5, code:8.0 },
   ],
   skills: [
-    { name:'claude-code-guide', desc:'Claude Code 功能指南', usage:4832, prevRank:2, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code', cmd:'claude skill add claude-code-guide' },
-    { name:'simplify', desc:'代码审查与优化建议', usage:3210, prevRank:1, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add simplify' },
-    { name:'review', desc:'PR 代码审查', usage:2891, prevRank:4, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add review' },
-    { name:'claude-api', desc:'Claude API 开发指南', usage:2456, prevRank:3, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add claude-api' },
-    { name:'init', desc:'项目文档初始化', usage:1987, prevRank:6, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add init' },
-    { name:'update-config', desc:'Claude Code 配置管理', usage:1654, prevRank:5, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add update-config' },
-    { name:'security-review', desc:'安全审查', usage:1234, prevRank:8, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add security-review' },
-    { name:'loop', desc:'定时任务设置', usage:987, prevRank:7, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add loop' },
-    { name:'fewer-permission-prompts', desc:'减少权限弹窗', usage:756, prevRank:9, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add fewer-permission-prompts' },
-    { name:'keybindings-help', desc:'快捷键自定义', usage:523, prevRank:null, url:'https://github.com/anthropics/anthropic-quickstarts/tree/main/claude-code/skills', cmd:'claude skill add keybindings-help' },
+    { name:'claude-code-guide', desc:'Claude Code 官方功能指南：快捷键、slash commands、MCP 服务器、设置与 IDE 集成详解', usage:4832, prevRank:2, url:'https://clawhub.ai/skills/claude-code-guide', cmd:'claude skill add claude-code-guide' },
+    { name:'simplify', desc:'自动审查代码变更，识别可复用的逻辑片段，简化冗余实现并提升代码质量', usage:3210, prevRank:1, url:'https://clawhub.ai/bestisblessed/simplify', cmd:'claude skill add simplify' },
+    { name:'review', desc:'自动化 PR 代码审查：检查代码质量、潜在 Bug、性能问题和最佳实践规范', usage:2891, prevRank:4, url:'https://clawhub.ai/ethagent/review', cmd:'claude skill add review' },
+    { name:'claude-api', desc:'构建、调试和优化 Claude API/Anthropic SDK 应用，支持 Prompt 缓存和模型版本迁移', usage:2456, prevRank:3, url:'https://clawhub.ai/skills/claude-api', cmd:'claude skill add claude-api' },
+    { name:'init', desc:'自动扫描代码库生成 CLAUDE.md 文档，记录项目架构、约定和关键文件信息', usage:1987, prevRank:6, url:'https://clawhub.ai/skills/init', cmd:'claude skill add init' },
+    { name:'update-config', desc:'管理 Claude Code 的 settings.json 配置：权限、环境变量、hook 钩子和自定义设置', usage:1654, prevRank:5, url:'https://clawhub.ai/skills/update-config', cmd:'claude skill add update-config' },
+    { name:'security-review', desc:'审查当前分支的代码变更是否存在安全漏洞：注入、XSS、敏感信息泄露等风险', usage:1234, prevRank:8, url:'https://clawhub.ai/mpbshhx/security-review', cmd:'claude skill add security-review' },
+    { name:'loop', desc:'设置 Claude 的定时循环任务，按自定义间隔重复执行指定命令或 slash command', usage:987, prevRank:7, url:'https://clawhub.ai/ivangdavila/loop', cmd:'claude skill add loop' },
+    { name:'fewer-permission-prompts', desc:'扫描历史工具调用记录，将高频只读命令加入白名单，减少权限确认弹窗次数', usage:756, prevRank:9, url:'https://clawhub.ai/skills/fewer-permission-prompts', cmd:'claude skill add fewer-permission-prompts' },
+    { name:'keybindings-help', desc:'自定义 Claude Code 的键盘快捷键：重新绑定按键、添加和弦快捷键组合', usage:523, prevRank:null, url:'https://clawhub.ai/skills/keybindings-help', cmd:'claude skill add keybindings-help' },
+    { name:'statusline-setup', desc:'配置 Claude Code 状态栏显示内容，自定义终端底部信息栏展示的项目信息', usage:498, prevRank:12, url:'https://clawhub.ai/skills/statusline-setup', cmd:'claude skill add statusline-setup' },
+    { name:'commit-helper', desc:'根据代码变更自动生成规范的 Git commit message，支持 Conventional Commits 格式', usage:487, prevRank:11, url:'https://clawhub.ai/skills/commit-helper', cmd:'claude skill add commit-helper' },
+    { name:'typescript-setup', desc:'TypeScript 项目初始化：tsconfig 配置、类型声明、ESLint 规则和构建脚本', usage:445, prevRank:10, url:'https://clawhub.ai/skills/typescript-setup', cmd:'claude skill add typescript-setup' },
+    { name:'docker-helper', desc:'Docker 容器配置指南：Dockerfile 编写、docker-compose 编排和最佳实践', usage:398, prevRank:15, url:'https://clawhub.ai/skills/docker-helper', cmd:'claude skill add docker-helper' },
+    { name:'git-workflow', desc:'Git 工作流辅助：分支管理、rebase 策略、cherry-pick 和 tag 管理规范', usage:376, prevRank:13, url:'https://clawhub.ai/skills/git-workflow', cmd:'claude skill add git-workflow' },
+    { name:'test-generator', desc:'自动为函数和组件生成单元测试，覆盖正常流程和边界情况', usage:354, prevRank:14, url:'https://clawhub.ai/skills/test-generator', cmd:'claude skill add test-generator' },
+    { name:'refactor-assistant', desc:'智能代码重构建议：识别代码异味（code smell）、提取重复逻辑、优化架构', usage:332, prevRank:16, url:'https://clawhub.ai/skills/refactor-assistant', cmd:'claude skill add refactor-assistant' },
+    { name:'doc-generator', desc:'从代码注释和类型定义自动生成 API 文档和 README 文件', usage:298, prevRank:18, url:'https://clawhub.ai/skills/doc-generator', cmd:'claude skill add doc-generator' },
+    { name:'env-setup', desc:'项目开发环境一键配置：依赖安装、环境变量管理、本地服务启动', usage:276, prevRank:17, url:'https://clawhub.ai/skills/env-setup', cmd:'claude skill add env-setup' },
+    { name:'debug-assistant', desc:'交互式调试助手：分析错误堆栈、定位问题根因、提供修复建议', usage:251, prevRank:19, url:'https://clawhub.ai/skills/debug-assistant', cmd:'claude skill add debug-assistant' },
   ],
   history: [
     { date:'2026-04-22', summary:'ChatGPT 多图输入, Claude Computer Use Beta, Gemini 10M 上下文' },
@@ -629,10 +639,10 @@ function renderSkills(){
     type:'bar',
     data:{
       labels:skills.map(s=>s.name),
-      datasets:[{ label:'使用量', data:skills.map(s=>s.usage), backgroundColor:'#4f6ef7', borderRadius:6, barThickness:32 }]
+      datasets:[{ label:'使用量', data:skills.map(s=>s.usage), backgroundColor:'#4f6ef7', borderRadius:6, barThickness:20 }]
     },
     options:{
-      indexAxis:'y', responsive:true,
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
       scales:{ x:{ beginAtZero:true }, y:{ ticks:{ font:{ size:11 } } } },
       plugins:{ legend:{ display:false } },
       animation:{ duration:800 }
